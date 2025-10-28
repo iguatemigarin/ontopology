@@ -1,9 +1,7 @@
 use wasm_bindgen::prelude::*;
 
 static mut OBJECTS: Vec<f32> = Vec::new();
-static G: f32 = 0.00001;
 static PARAMS_COUNT: usize = 7;
-static VELOCITY_DAMPING: f32 = 0.001;
 
 #[wasm_bindgen]
 pub fn populate(init_objects: Vec<f32>) {
@@ -36,20 +34,15 @@ fn update_positions(aspect: f32) {
             let py = i + 1;
             let vx = i + 2;
             let vy = i + 3;
-
+            let mass = i + 6;
             OBJECTS[px] += OBJECTS[vx];
             OBJECTS[py] += OBJECTS[vy];
 
-            if OBJECTS[px] > x_boundary {
-                OBJECTS[px] = -x_boundary;
-            } else if OBJECTS[px] < -x_boundary {
-                OBJECTS[px] = x_boundary;
-            }
-
-            if OBJECTS[py] > y_boundary {
-                OBJECTS[py] = -y_boundary;
-            } else if OBJECTS[py] < -y_boundary {
-                OBJECTS[py] = y_boundary;
+            // forget if out
+            if OBJECTS[px] > x_boundary || OBJECTS[px] < -x_boundary {
+                OBJECTS[mass] = 0.0;
+            } else if OBJECTS[py] > y_boundary || OBJECTS[py] < -y_boundary {
+                OBJECTS[mass] = 0.0;
             }
 
             i += PARAMS_COUNT;
@@ -60,7 +53,7 @@ fn update_positions(aspect: f32) {
     }
 }
 
-fn update_acceleration() {
+fn update_acceleration(velocity_damping: f32, g: f32) {
     let mut i = 0;
 
     unsafe {
@@ -138,7 +131,7 @@ fn update_acceleration() {
                     j += PARAMS_COUNT;
                     continue;
                 }
-                let force = G * m2 / (r_squared * r * m1);
+                let force = g * m2 / (r_squared * r * m1);
 
                 OBJECTS[i + 4] += force * dx;
                 OBJECTS[i + 5] += force * dy;
@@ -146,8 +139,8 @@ fn update_acceleration() {
                 j += PARAMS_COUNT;
             }
 
-            OBJECTS[i + 2] += OBJECTS[i + 4] * VELOCITY_DAMPING;
-            OBJECTS[i + 3] += OBJECTS[i + 5] * VELOCITY_DAMPING;
+            OBJECTS[i + 2] += OBJECTS[i + 4] * velocity_damping;
+            OBJECTS[i + 3] += OBJECTS[i + 5] * velocity_damping;
 
             i += PARAMS_COUNT;
             if i >= count {
@@ -158,7 +151,7 @@ fn update_acceleration() {
 }
 
 #[wasm_bindgen]
-pub fn update(_delta: f32, aspect: f32) {
-    update_acceleration();
+pub fn update(_delta: f32, aspect: f32, velocity_damping: f32, g: f32) {
+    update_acceleration(velocity_damping, g);
     update_positions(aspect);
 }

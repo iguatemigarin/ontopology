@@ -6,9 +6,16 @@ import { loop, updateFps } from './loop.mjs';
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-const PARTICLE_COUNT = 1000;
-const MASSIVENESS = 1;
 const PARAMS_COUNT = 7;
+
+const PARTICLE_COUNT = 2000;
+const MASSIVENESS = 1;
+const DISTRIBUTION = 1;
+const VELOCITY_DAMPING = 0.00000015; // stable
+const G = 0.000015; // stable
+
+// const VELOCITY_DAMPING = 0.000001; // beautiful
+// const G = 0.0001; // beautiful
 /*
 px = 0
 py = 1
@@ -25,11 +32,11 @@ const aspect = canvas.width / canvas.height;
 gl.viewport(0, 0, canvas.width, canvas.height);
 gl.uniform1f(aspectLoc, aspect);
 
-populate(generateParticles(PARTICLE_COUNT, PARAMS_COUNT, MASSIVENESS));
+populate(generateParticles(PARTICLE_COUNT, PARAMS_COUNT, MASSIVENESS, DISTRIBUTION));
 
 const ptr = get_buffer_ptr();
 const len = get_buffer_len();
 const buffer = new Float32Array(wasm.memory.buffer, ptr, len);
 
-loop(gl, buffer, aspect);
+loop(gl, buffer, aspect, VELOCITY_DAMPING, G);
 updateFps();

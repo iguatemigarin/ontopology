@@ -9,18 +9,20 @@ let lastTime = performance.now();
  * @param {WebGLRenderingContext} gl
  * @param {Float32Array} buffer
  * @param {number} aspect
+ * @param {number} velocityDamping
+ * @param {number} G
  */
-export function loop(gl, buffer, aspect) {
+export function loop(gl, buffer, aspect, velocityDamping, G) {
     const now = performance.now();
     const delta = now - lastTime;
     lastTime = now;
 
     frameCount++;
 
-    update(delta, aspect);
+    update(delta, aspect, velocityDamping, G);
     updateView(buffer, gl);
 
-    window.requestAnimationFrame(() => loop(gl, buffer, aspect));
+    window.requestAnimationFrame(() => loop(gl, buffer, aspect, velocityDamping, G));
 }
 export function updateFps() {
     currentFps = frameCount;
