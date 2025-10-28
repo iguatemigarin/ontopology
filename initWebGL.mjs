@@ -5,8 +5,8 @@ const [vertexSrc, fragmentSrc] = await Promise.all([
 
 
 /**
- *  [px, py, vx, vy, mass]
- *   0   4   8   12  16    <- byte offsets
+ *  [px, py, vx, vy, ax, ay, mass]
+ *   0   4   8   12  16  20  24    <- byte offsets
  * @param {HTMLCanvasElement} canvas
  */
 export function initWebGL(canvas) {
@@ -48,8 +48,8 @@ export function initWebGL(canvas) {
     gl.enableVertexAttribArray(positionLoc);
     gl.enableVertexAttribArray(massLoc);
 
-    gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 20, 0);
-    gl.vertexAttribPointer(massLoc, 1, gl.FLOAT, false, 20, 16);
+    gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 28, 0);
+    gl.vertexAttribPointer(massLoc, 1, gl.FLOAT, false, 28, 24);
 
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
