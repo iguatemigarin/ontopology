@@ -12,7 +12,8 @@ let lastTime = performance.now();
  * @param {number} integrationTimestep
  * @param {number} G
  */
-export function loop(gl, buffer, aspect, integrationTimestep, G) {
+export function loop(gl, buffer, aspect, params) {
+    const { G, integrationTimestep } = params
     const now = performance.now();
     const delta = now - lastTime;
     lastTime = now;
@@ -22,7 +23,7 @@ export function loop(gl, buffer, aspect, integrationTimestep, G) {
     update(delta, aspect, integrationTimestep, G);
     updateView(buffer, gl);
 
-    window.requestAnimationFrame(() => loop(gl, buffer, aspect, integrationTimestep, G));
+    window.requestAnimationFrame(() => loop(gl, buffer, aspect, params));
 }
 export function updateFps() {
     currentFps = frameCount;

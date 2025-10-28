@@ -1,3 +1,4 @@
+import GUI from 'https://cdn.jsdelivr.net/npm/lil-gui@0.21/+esm';
 import initWasm, { populate, get_buffer_ptr, get_buffer_len } from './pkg/ontopology.js';
 import { initWebGL } from './initWebGL.mjs';
 import { generateParticles } from './generateParticles.mjs';
@@ -11,11 +12,7 @@ const PARAMS_COUNT = 7;
 const PARTICLE_COUNT = 2000;
 const MASSIVENESS = 1;
 const DISTRIBUTION = 0.75;
-// const INTEGRATION_TIMESTEP = 0.00000015; // stable
-// const G = 0.000015; // stable
 
-const INTEGRATION_TIMESTEP = 0.00000001; // beautiful
-const G = 0.00012; // beautiful
 /*
 px = 0
 py = 1
@@ -25,6 +22,17 @@ ax = 4
 ay = 5
 mass = 6
 */
+
+const params = {
+    G: 0.00012,
+    integrationTimestep: 0.00000001,
+    particleCount: 2000,
+    massiveness: 1,
+    distribution: 0.75
+};
+const gui = new GUI();
+gui.add(params, 'G', 0, 0.001, 0.00001);
+gui.add(params, 'integrationTimestep', 0, 0.00001, 0.00000001);
 
 const wasm = await initWasm();
 const { gl, aspectLoc } = initWebGL(canvas);
@@ -38,5 +46,5 @@ const ptr = get_buffer_ptr();
 const len = get_buffer_len();
 const buffer = new Float32Array(wasm.memory.buffer, ptr, len);
 
-loop(gl, buffer, aspect, INTEGRATION_TIMESTEP, G);
+loop(gl, buffer, aspect, params);
 updateFps();
