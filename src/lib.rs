@@ -53,7 +53,7 @@ fn update_positions(aspect: f32) {
     }
 }
 
-fn update_acceleration(velocity_damping: f32, g: f32) {
+fn update_acceleration(delta: f32, integration_timestep: f32, g: f32) {
     let mut i = 0;
 
     unsafe {
@@ -139,8 +139,8 @@ fn update_acceleration(velocity_damping: f32, g: f32) {
                 j += PARAMS_COUNT;
             }
 
-            OBJECTS[i + 2] += OBJECTS[i + 4] * velocity_damping;
-            OBJECTS[i + 3] += OBJECTS[i + 5] * velocity_damping;
+            OBJECTS[i + 2] += OBJECTS[i + 4] * delta * integration_timestep;
+            OBJECTS[i + 3] += OBJECTS[i + 5] * delta * integration_timestep;
 
             i += PARAMS_COUNT;
             if i >= count {
@@ -151,7 +151,7 @@ fn update_acceleration(velocity_damping: f32, g: f32) {
 }
 
 #[wasm_bindgen]
-pub fn update(_delta: f32, aspect: f32, velocity_damping: f32, g: f32) {
-    update_acceleration(velocity_damping, g);
+pub fn update(delta: f32, aspect: f32, integration_timestep: f32, g: f32) {
+    update_acceleration(delta, integration_timestep, g);
     update_positions(aspect);
 }
