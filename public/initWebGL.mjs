@@ -1,6 +1,6 @@
 const [vertexSrc, fragmentSrc] = await Promise.all([
-    fetch('./vertex.glsl').then(r => r.text()),
-    fetch('./fragment.glsl').then(r => r.text()),
+    fetch('./shaders/vertex.glsl').then(r => r.text()),
+    fetch('./shaders/fragment.glsl').then(r => r.text()),
 ]);
 
 

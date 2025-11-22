@@ -3,7 +3,7 @@
 public/pkg:
 	cargo install wasm-pack
 
-build:
+build: clean
 	wasm-pack build --target web --out-dir public/pkg
 
 start: build
