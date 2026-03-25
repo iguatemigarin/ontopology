@@ -1,4 +1,4 @@
-import type { Entity } from './engine/Entity'
+import type { Entity } from './Entity'
 
 const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
 

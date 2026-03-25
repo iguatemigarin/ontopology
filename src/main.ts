@@ -1,5 +1,5 @@
-import './global.css'
-import { initLoop } from './loop'
+import './engine/global.css'
+import { initLoop } from './engine/loop'
 import { rootEntity } from './engine/RootEntity'
 import { FPSCounter } from './engine/FPSCounter'
 
