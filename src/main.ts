@@ -7,6 +7,7 @@ import { Rocket } from './entities/Rocket'
 const fpsCounter = new FPSCounter()
 rootEntity.add(fpsCounter)
 
-const rocket = new Rocket({ x: 100, y: 100 })
+const rocket = new Rocket({ x: window.innerWidth / 2, y: window.innerHeight / 2 })
 rootEntity.add(rocket)
+
 initLoop(rootEntity)
