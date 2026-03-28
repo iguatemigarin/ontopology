@@ -2,27 +2,28 @@ import { COLOR, PIXEL } from '../constants'
 import { Entity } from '../engine/Entity'
 import { isDown } from '../engine/input'
 import type { Vect } from '../engine/Vect'
+import { JetParticle } from './JetParticle'
 
 export class Rocket extends Entity {
-  pos: Vect
-  acceleration: Vect = { x: 0, y: 0 }
-  velocity: Vect = { x: 0, y: 0 }
-  enginePower: number = 0.001
+  p: Vect
+  v: Vect = { x: 0, y: 0 }
+  a: Vect = { x: 0, y: 0 }
+  enginePower: number = 0.0001
   breakPower: number = 0.001
   rotationPower: number = 0.001
   rotation: number = 0
 
-  width: number = 10
-  height: number = 20
+  width: number = 4
+  height: number = 10
 
   constructor(pos: Vect) {
     super()
-    this.pos = pos
+    this.p = pos
   }
 
   render(ctx: CanvasRenderingContext2D) {
     ctx.save()
-    ctx.translate(this.pos.x, this.pos.y)
+    ctx.translate(this.p.x, this.p.y)
     ctx.rotate(this.rotation)
     ctx.fillStyle = COLOR.GREY3
     ctx.fillRect(
@@ -34,16 +35,16 @@ export class Rocket extends Entity {
     ctx.fillStyle = COLOR.GREEN
     ctx.fillRect(
       (-this.width / 4) * PIXEL,
-      (-this.height / 1.3) * PIXEL,
+      (-this.height / 2) * PIXEL,
       (this.width / 2) * PIXEL,
-      (this.height / 3) * PIXEL,
+      (this.height / 4) * PIXEL,
     )
 
     ctx.restore()
   }
 
   update(delta: number) {
-    this.acceleration = { x: 0, y: 0 }
+    this.a = { x: 0, y: 0 }
 
     if (isDown('a') || isDown('ArrowLeft')) this.rotation += -this.rotationPower * delta
     if (isDown('d') || isDown('ArrowRight')) this.rotation += this.rotationPower * delta
@@ -51,22 +52,40 @@ export class Rocket extends Entity {
     if (Math.abs(this.rotation) > Math.PI * 2) this.rotation = 0
 
     if (isDown('w') || isDown('ArrowUp')) {
-      this.acceleration.x += Math.sin(this.rotation) * this.enginePower
-      this.acceleration.y += -Math.cos(this.rotation) * this.enginePower
+      this.a.x += Math.sin(this.rotation) * this.enginePower
+      this.a.y += -Math.cos(this.rotation) * this.enginePower
+
+      this.ejectParticle()
     }
     if (isDown('s') || isDown('ArrowDown')) {
-      this.acceleration.x += -Math.sin(this.rotation) * this.enginePower
-      this.acceleration.y += Math.cos(this.rotation) * this.enginePower
+      this.a.x += -Math.sin(this.rotation) * this.enginePower
+      this.a.y += Math.cos(this.rotation) * this.enginePower
     }
     if (isDown(' ')) {
-      this.velocity.x *= Math.pow(1 - this.breakPower, delta)
-      this.velocity.y *= Math.pow(1 - this.breakPower, delta)
+      this.v.x *= Math.pow(1 - this.breakPower, delta)
+      this.v.y *= Math.pow(1 - this.breakPower, delta)
     }
 
-    this.velocity.x += this.acceleration.x * delta
-    this.velocity.y += this.acceleration.y * delta
+    this.v.x += this.a.x * delta
+    this.v.y += this.a.y * delta
 
-    this.pos.x += this.velocity.x
-    this.pos.y += this.velocity.y
+    this.p.x += this.v.x
+    this.p.y += this.v.y
+  }
+
+  ejectParticle() {
+    const particle = new JetParticle(
+      {
+        x: this.p.x - this.width * PIXEL * Math.sin(this.rotation),
+        y: this.p.y + (this.height / 2) * PIXEL * Math.cos(this.rotation),
+      },
+      {
+        x: -100 * this.enginePower * Math.sin(this.rotation),
+        y: 100 * this.enginePower * Math.cos(this.rotation),
+      },
+      this.rotation,
+    )
+
+    this.add(particle)
   }
 }

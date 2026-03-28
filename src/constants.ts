@@ -1,4 +1,4 @@
-export const PIXEL = 2
+export const PIXEL = 3
 
 export const COLOR = {
   BLACK: '#1d2021',
