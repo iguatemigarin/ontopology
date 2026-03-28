@@ -2,6 +2,7 @@ import { COLOR, PIXEL } from '../constants'
 import { Entity } from '../engine/Entity'
 import { isDown } from '../engine/input'
 import type { Vect } from '../engine/Vect'
+import { BreakParticle } from './BreakParticle'
 import { JetParticle } from './JetParticle'
 
 export class Rocket extends Entity {
@@ -55,15 +56,15 @@ export class Rocket extends Entity {
       this.a.x += Math.sin(this.rotation) * this.enginePower
       this.a.y += -Math.cos(this.rotation) * this.enginePower
 
-      this.ejectParticle()
-    }
-    if (isDown('s') || isDown('ArrowDown')) {
-      this.a.x += -Math.sin(this.rotation) * this.enginePower
-      this.a.y += Math.cos(this.rotation) * this.enginePower
+      this.ejectEngineParticle()
     }
     if (isDown(' ')) {
       this.v.x *= Math.pow(1 - this.breakPower, delta)
       this.v.y *= Math.pow(1 - this.breakPower, delta)
+      if (Math.abs(this.v.x) < 0.05) this.v.x = 0
+      if (Math.abs(this.v.y) < 0.05) this.v.y = 0
+
+      if (this.v.x !== 0 || this.v.y !== 0) this.ejectBreakParticle()
     }
 
     this.v.x += this.a.x * delta
@@ -73,7 +74,7 @@ export class Rocket extends Entity {
     this.p.y += this.v.y
   }
 
-  ejectParticle() {
+  ejectEngineParticle() {
     const particle = new JetParticle(
       {
         x: this.p.x - this.width * PIXEL * Math.sin(this.rotation),
@@ -84,6 +85,21 @@ export class Rocket extends Entity {
         y: 100 * this.enginePower * Math.cos(this.rotation),
       },
       this.rotation,
+    )
+
+    this.add(particle)
+  }
+
+  ejectBreakParticle() {
+    const particle = new BreakParticle(
+      {
+        x: this.p.x,
+        y: this.p.y,
+      },
+      {
+        x: this.v.x,
+        y: this.v.y,
+      },
     )
 
     this.add(particle)

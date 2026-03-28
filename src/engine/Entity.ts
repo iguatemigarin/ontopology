@@ -15,8 +15,8 @@ export class Entity {
 
   renderChildren(ctx: CanvasRenderingContext2D) {
     this.children.forEach((e) => {
-      e.renderChildren(ctx)
       e.render(ctx)
+      e.renderChildren(ctx)
     })
   }
 
