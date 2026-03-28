@@ -1,15 +1,15 @@
-import { pixel } from '../constants'
+import { PIXEL } from '../constants'
 import { Entity } from '../engine/Entity'
+import type { Vect } from '../engine/Vect'
 
-export class Star extends Entity {
+export class Body extends Entity {
   radius = 10
-  x: number
-  y: number
+  pos: Vect
 
-  constructor(x: number, y: number) {
+  constructor(pos: Vect, radius = 10) {
     super()
-    this.x = x
-    this.y = y
+    this.pos = pos
+    this.radius = radius
   }
 
   render(ctx: CanvasRenderingContext2D) {
@@ -18,7 +18,7 @@ export class Star extends Entity {
     for (let row = -this.radius; row <= this.radius; row++) {
       for (let col = -this.radius; col <= this.radius; col++) {
         if (col * col + row * row <= this.radius * this.radius) {
-          ctx.fillRect(this.x + col * pixel, this.y + row * pixel, pixel, pixel)
+          ctx.fillRect(this.pos.x + col * PIXEL, this.pos.y + row * PIXEL, PIXEL, PIXEL)
         }
       }
     }
