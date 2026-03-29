@@ -38,39 +38,41 @@ export class Rocket extends Entity {
   }
 
   renderHull(ctx: CanvasRenderingContext2D) {
-    ctx.save()
-    ctx.translate(this.p.x, this.p.y)
-    ctx.rotate(this.r)
-    ctx.fillStyle = COLOR.GREY3
-    ctx.fillRect(
-      (-this.width / 2) * PIXEL,
-      (-this.height / 2) * PIXEL,
-      this.width * PIXEL,
-      this.height * PIXEL,
-    )
-    ctx.restore()
+    this.renderInPlace(ctx, (ctx) => {
+      ctx.fillStyle = COLOR.GREY3
+      ctx.fillRect(
+        (-this.width / 2) * PIXEL,
+        (-this.height / 2) * PIXEL,
+        this.width * PIXEL,
+        this.height * PIXEL,
+      )
+    })
   }
 
   renderCockpit(ctx: CanvasRenderingContext2D) {
-    ctx.save()
-    ctx.translate(this.p.x, this.p.y)
-    ctx.rotate(this.r)
-    ctx.fillStyle = COLOR.GREEN
-    ctx.fillRect(
-      (-this.width / 4) * PIXEL,
-      (-this.height / 2) * PIXEL,
-      (this.width / 2) * PIXEL,
-      (this.height / 4) * PIXEL,
-    )
-    ctx.restore()
+    this.renderInPlace(ctx, (ctx) => {
+      ctx.fillStyle = COLOR.GREEN
+      ctx.fillRect(
+        (-this.width / 4) * PIXEL,
+        (-this.height / 2) * PIXEL,
+        (this.width / 2) * PIXEL,
+        (this.height / 4) * PIXEL,
+      )
+    })
   }
 
   renderBreakSystem(ctx: CanvasRenderingContext2D) {
+    this.renderInPlace(ctx, (ctx) => {
+      ctx.fillStyle = COLOR.PURPLE
+      ctx.fillRect((-this.width / 8) * PIXEL, -PIXEL, (this.width / 4) * PIXEL, PIXEL)
+    })
+  }
+
+  renderInPlace(ctx: CanvasRenderingContext2D, cb: (ctx: CanvasRenderingContext2D) => void) {
     ctx.save()
     ctx.translate(this.p.x, this.p.y)
     ctx.rotate(this.r)
-    ctx.fillStyle = COLOR.PURPLE
-    ctx.fillRect((-this.width / 8) * PIXEL, -PIXEL, (this.width / 4) * PIXEL, PIXEL)
+    cb(ctx)
     ctx.restore()
   }
 
