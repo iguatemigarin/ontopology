@@ -6,6 +6,7 @@ export class JetParticle extends Entity {
   p: Vect
   v: Vect
   r: number
+  rRate: number
   color: string
   alpha = 1
   burn = 0.0005
@@ -14,6 +15,7 @@ export class JetParticle extends Entity {
     super()
     this.p = { ...p }
     this.r = r
+    this.rRate = Math.random() > 0.5 ? -0.01 : 0.01
 
     this.v = {
       x: v.x + (0.5 - Math.random()) * 0.01,
@@ -36,6 +38,7 @@ export class JetParticle extends Entity {
     this.p.x += this.v.x * delta
     this.p.y += this.v.y * delta
     this.alpha -= this.burn * delta
+    this.r += this.rRate
     if (this.alpha <= 0) {
       this.destroy()
     }

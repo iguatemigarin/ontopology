@@ -32,6 +32,11 @@ export class Rocket extends Entity {
   }
 
   render(ctx: CanvasRenderingContext2D) {
+    this.renderHull(ctx)
+    this.renderCockpit(ctx)
+  }
+
+  renderHull(ctx: CanvasRenderingContext2D) {
     ctx.save()
     ctx.translate(this.p.x, this.p.y)
     ctx.rotate(this.rotation)
@@ -42,6 +47,13 @@ export class Rocket extends Entity {
       this.width * PIXEL,
       this.height * PIXEL,
     )
+    ctx.restore()
+  }
+
+  renderCockpit(ctx: CanvasRenderingContext2D) {
+    ctx.save()
+    ctx.translate(this.p.x, this.p.y)
+    ctx.rotate(this.rotation)
     ctx.fillStyle = COLOR.GREEN
     ctx.fillRect(
       (-this.width / 4) * PIXEL,
@@ -49,7 +61,6 @@ export class Rocket extends Entity {
       (this.width / 2) * PIXEL,
       (this.height / 4) * PIXEL,
     )
-
     ctx.restore()
   }
 
@@ -70,8 +81,8 @@ export class Rocket extends Entity {
   ejectEngineParticle() {
     const particle = new JetParticle(
       {
-        x: this.p.x - this.width * PIXEL * Math.sin(this.rotation),
-        y: this.p.y + (this.height / 2) * PIXEL * Math.cos(this.rotation),
+        x: this.p.x - (this.width + PIXEL) * PIXEL * Math.sin(this.rotation),
+        y: this.p.y + ((this.height + PIXEL) / 2) * PIXEL * Math.cos(this.rotation),
       },
       {
         x: -100 * this.enginePower * Math.sin(this.rotation),
