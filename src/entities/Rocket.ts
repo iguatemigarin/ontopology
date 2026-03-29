@@ -1,16 +1,20 @@
-import { COLOR, PIXEL } from '../constants'
+import { G, COLOR, PIXEL } from '../constants'
 import { Entity } from '../engine/Entity'
 import { isDown } from '../engine/input'
 import type { Vect } from '../engine/Vect'
 import { ThrustSound } from '../sounds/ThrustSound'
 import { BreakParticle } from './BreakParticle'
 import { JetParticle } from './JetParticle'
+import { Body } from './Body'
 
 export class Rocket extends Entity {
   p: Vect
   v: Vect = { x: 0, y: 0 }
   a: Vect = { x: 0, y: 0 }
   r: number = 0
+  m = 1
+  bodies: Body[] = []
+
   enginePower: number = 0.0001
   breakPower: number = 0.001
   rotationPower: number = 0.001
@@ -82,6 +86,7 @@ export class Rocket extends Entity {
     this.handleRotation(delta)
     this.handleThrust()
     this.handleBreak(delta)
+    this.handleBodies()
 
     this.v.x += this.a.x * delta
     this.v.y += this.a.y * delta
@@ -160,6 +165,19 @@ export class Rocket extends Entity {
         this.isBreakPlaying = false
         this.breakSound.stop()
       }
+    }
+  }
+
+  handleBodies() {
+    for (const body of this.bodies) {
+      const dx = body.p.x - this.p.x
+      const dy = body.p.y - this.p.y
+      const r = Math.sqrt(dx * dx + dy * dy)
+      const f = (G * this.m * body.m) / (r * r)
+      const fx = f * (dx / r)
+      const fy = f * (dy / r)
+      this.a.x += fx / this.m
+      this.a.y += fy / this.m
     }
   }
 }

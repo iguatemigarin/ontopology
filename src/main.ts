@@ -8,7 +8,7 @@ import { Body } from './entities/Body'
 const fpsCounter = new FPSCounter()
 rootEntity.add(fpsCounter)
 
-const rocket = new Rocket({ x: window.innerWidth / 2, y: window.innerHeight / 2 - 110 })
+const rocket = new Rocket({ x: window.innerWidth / 2, y: window.innerHeight / 2 - 200 })
 rootEntity.add(rocket)
 
 const body = new Body(
@@ -16,7 +16,9 @@ const body = new Body(
     x: window.innerWidth / 2,
     y: window.innerHeight / 2,
   },
-  10,
+  1,
 )
 rootEntity.add(body)
+
+rocket.bodies.push(body)
 initLoop(rootEntity)
