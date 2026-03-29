@@ -10,10 +10,10 @@ export class Rocket extends Entity {
   p: Vect
   v: Vect = { x: 0, y: 0 }
   a: Vect = { x: 0, y: 0 }
+  r: number = 0
   enginePower: number = 0.0001
   breakPower: number = 0.001
   rotationPower: number = 0.001
-  rotation: number = 0
 
   width: number = 4
   height: number = 10
@@ -34,12 +34,13 @@ export class Rocket extends Entity {
   render(ctx: CanvasRenderingContext2D) {
     this.renderHull(ctx)
     this.renderCockpit(ctx)
+    this.renderBreakSystem(ctx)
   }
 
   renderHull(ctx: CanvasRenderingContext2D) {
     ctx.save()
     ctx.translate(this.p.x, this.p.y)
-    ctx.rotate(this.rotation)
+    ctx.rotate(this.r)
     ctx.fillStyle = COLOR.GREY3
     ctx.fillRect(
       (-this.width / 2) * PIXEL,
@@ -53,7 +54,7 @@ export class Rocket extends Entity {
   renderCockpit(ctx: CanvasRenderingContext2D) {
     ctx.save()
     ctx.translate(this.p.x, this.p.y)
-    ctx.rotate(this.rotation)
+    ctx.rotate(this.r)
     ctx.fillStyle = COLOR.GREEN
     ctx.fillRect(
       (-this.width / 4) * PIXEL,
@@ -61,6 +62,15 @@ export class Rocket extends Entity {
       (this.width / 2) * PIXEL,
       (this.height / 4) * PIXEL,
     )
+    ctx.restore()
+  }
+
+  renderBreakSystem(ctx: CanvasRenderingContext2D) {
+    ctx.save()
+    ctx.translate(this.p.x, this.p.y)
+    ctx.rotate(this.r)
+    ctx.fillStyle = COLOR.PURPLE
+    ctx.fillRect((-this.width / 8) * PIXEL, -PIXEL, (this.width / 4) * PIXEL, PIXEL)
     ctx.restore()
   }
 
@@ -81,14 +91,14 @@ export class Rocket extends Entity {
   ejectEngineParticle() {
     const particle = new JetParticle(
       {
-        x: this.p.x - (this.width + PIXEL) * PIXEL * Math.sin(this.rotation),
-        y: this.p.y + ((this.height + PIXEL) / 2) * PIXEL * Math.cos(this.rotation),
+        x: this.p.x - (this.width + PIXEL) * PIXEL * Math.sin(this.r),
+        y: this.p.y + ((this.height + PIXEL) / 2) * PIXEL * Math.cos(this.r),
       },
       {
-        x: -100 * this.enginePower * Math.sin(this.rotation),
-        y: 100 * this.enginePower * Math.cos(this.rotation),
+        x: -100 * this.enginePower * Math.sin(this.r),
+        y: 100 * this.enginePower * Math.cos(this.r),
       },
-      this.rotation,
+      this.r,
     )
 
     this.add(particle)
@@ -100,9 +110,9 @@ export class Rocket extends Entity {
   }
 
   handleRotation(delta: number) {
-    if (isDown('a') || isDown('ArrowLeft')) this.rotation += -this.rotationPower * delta
-    if (isDown('d') || isDown('ArrowRight')) this.rotation += this.rotationPower * delta
-    if (Math.abs(this.rotation) > Math.PI * 2) this.rotation = 0
+    if (isDown('a') || isDown('ArrowLeft')) this.r += -this.rotationPower * delta
+    if (isDown('d') || isDown('ArrowRight')) this.r += this.rotationPower * delta
+    if (Math.abs(this.r) > Math.PI * 2) this.r = 0
   }
 
   handleThrust() {
@@ -111,8 +121,8 @@ export class Rocket extends Entity {
         this.thrustSound.play()
         this.isThrustPlaying = true
       }
-      this.a.x += Math.sin(this.rotation) * this.enginePower
-      this.a.y += -Math.cos(this.rotation) * this.enginePower
+      this.a.x += Math.sin(this.r) * this.enginePower
+      this.a.y += -Math.cos(this.r) * this.enginePower
 
       this.ejectEngineParticle()
     } else {
@@ -127,6 +137,7 @@ export class Rocket extends Entity {
     if (isDown(' ')) {
       this.v.x *= Math.pow(1 - this.breakPower, delta)
       this.v.y *= Math.pow(1 - this.breakPower, delta)
+
       if (Math.abs(this.v.x) < 0.05) this.v.x = 0
       if (Math.abs(this.v.y) < 0.05) this.v.y = 0
 
