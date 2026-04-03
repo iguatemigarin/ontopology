@@ -13,12 +13,16 @@ export class Rocket extends Entity {
   v: Vect = { x: 0, y: 0 }
   a: Vect = { x: 0, y: 0 }
   r: number = 0
+  rv: number = 0
+  ra: number = 0
+
   m = 0.001
   bodies: Body[] = []
 
   enginePower: number = 0.0005
   breakPower: number = 0.001
-  rotationPower: number = 0.001
+  rotationPower: number = 0.00005
+  rotationDrag: number = 0.99
 
   width: number = 4
   height: number = 10
@@ -83,11 +87,14 @@ export class Rocket extends Entity {
 
   update(delta: number) {
     this.a = { x: 0, y: 0 }
+    this.ra = 0
 
     this.handleRotation(delta)
     this.handleThrust()
     this.handleBreak(delta)
     this.handleBodies()
+
+    if (Math.abs(this.r) > Math.PI * 2) this.r = 0
 
     this.v.x += this.a.x * delta
     this.v.y += this.a.y * delta
@@ -118,9 +125,22 @@ export class Rocket extends Entity {
   }
 
   handleRotation(delta: number) {
-    if (isDown('a') || isDown('ArrowLeft')) this.r += -this.rotationPower * delta
-    if (isDown('d') || isDown('ArrowRight')) this.r += this.rotationPower * delta
-    if (Math.abs(this.r) > Math.PI * 2) this.r = 0
+    if (isDown('a') || isDown('ArrowLeft')) {
+      this.ra += -this.rotationPower
+    }
+
+    if (isDown('d') || isDown('ArrowRight')) {
+      this.ra += this.rotationPower
+    }
+
+    this.rv += this.ra * delta
+    if (Math.abs(this.rv) > 0.0001) {
+      this.rv *= this.rotationDrag
+    } else {
+      this.rv = 0
+    }
+
+    this.r += this.rv
   }
 
   handleThrust() {
