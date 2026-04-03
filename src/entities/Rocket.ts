@@ -23,6 +23,7 @@ export class Rocket extends Entity {
   breakPower: number = 0.001
   rotationPower: number = 0.00005
   rotationDrag: number = 0.99
+  restitution: number = 0.8
 
   width: number = 4
   height: number = 10
@@ -196,8 +197,8 @@ export class Rocket extends Entity {
     if (collision) {
       const { normal: n } = collision
       const dot = this.velocity.x * n.x + this.velocity.y * n.y
-      this.velocity.x -= 1.8 * dot * n.x
-      this.velocity.y -= 1.8 * dot * n.y
+      this.velocity.x -= (1 + this.restitution) * dot * n.x
+      this.velocity.y -= (1 + this.restitution) * dot * n.y
     }
   }
 }
