@@ -24,6 +24,9 @@ export class Rocket extends Entity {
   rotationPower: number = 0.00005
   rotationDrag: number = 0.99
   restitution: number = 0.8
+  landingSpeed: number = 0.2
+
+  isLanded: boolean = false
 
   width: number = 4
   height: number = 10
@@ -147,6 +150,7 @@ export class Rocket extends Entity {
 
   handleThrust() {
     if (isDown('w') || isDown('ArrowUp')) {
+      this.isLanded = false
       if (!this.isThrustPlaying) {
         this.thrustSound.play()
         this.isThrustPlaying = true
@@ -195,10 +199,35 @@ export class Rocket extends Entity {
     applyGravity(this.bodies, this)
     const collision = checkCollisions(this.bodies, this)
     if (collision) {
-      const { normal: n } = collision
+      const { normal: n, penetration } = collision
+
+      // Depenetrate: push rocket out along the normal
+      this.position.x -= n.x * penetration
+      this.position.y -= n.y * penetration
+
       const dot = this.velocity.x * n.x + this.velocity.y * n.y
-      this.velocity.x -= (1 + this.restitution) * dot * n.x
-      this.velocity.y -= (1 + this.restitution) * dot * n.y
+
+      if (!this.isLanded && Math.abs(dot) < this.landingSpeed) {
+        // Land: zero out velocity and cancel gravity into the surface each frame
+        this.isLanded = true
+        this.velocity.x = 0
+        this.velocity.y = 0
+      } else if (this.isLanded) {
+        // Cancel the acceleration component pushing into the surface (normal force)
+        const aDot = this.acceleration.x * n.x + this.acceleration.y * n.y
+        if (aDot < 0) {
+          this.acceleration.x -= aDot * n.x
+          this.acceleration.y -= aDot * n.y
+        }
+        this.velocity.x = 0
+        this.velocity.y = 0
+      } else {
+        // Bounce
+        this.velocity.x -= (1 + this.restitution) * dot * n.x
+        this.velocity.y -= (1 + this.restitution) * dot * n.y
+      }
+    } else {
+      this.isLanded = false
     }
   }
 }
