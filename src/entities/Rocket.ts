@@ -117,6 +117,7 @@ export class Rocket extends Entity {
   }
 
   handleRotation(delta: number) {
+    if (this.body.isLanded) return
     if (isDown('a') || isDown('ArrowLeft')) this.body.angularAcceleration -= this.rotationPower
     if (isDown('d') || isDown('ArrowRight')) this.body.angularAcceleration += this.rotationPower
   }
