@@ -1,4 +1,4 @@
-import { G, COLOR, PIXEL } from '../constants'
+import { COLOR, PIXEL } from '../constants'
 import { Entity } from '../engine/Entity'
 import { isDown } from '../engine/input'
 import type { Vect } from '../engine/Vect'
