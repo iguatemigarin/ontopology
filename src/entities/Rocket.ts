@@ -192,9 +192,12 @@ export class Rocket extends Entity {
 
   handleBodies() {
     applyGravity(this.bodies, this)
-    if (checkCollisions(this.bodies, this)) {
-      this.velocity.x *= -0.5
-      this.velocity.y *= -0.5
+    const collision = checkCollisions(this.bodies, this)
+    if (collision) {
+      const { normal: n } = collision
+      const dot = this.velocity.x * n.x + this.velocity.y * n.y
+      this.velocity.x -= 1.8 * dot * n.x
+      this.velocity.y -= 1.8 * dot * n.y
     }
   }
 }

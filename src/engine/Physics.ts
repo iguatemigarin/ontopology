@@ -15,7 +15,9 @@ export function applyGravity(bodies: Body[], rocket: Rocket) {
   }
 }
 
-export function checkCollisions(bodies: Body[], rocket: Rocket): Body | null {
+export type Collision = { body: Body; normal: { x: number; y: number } }
+
+export function checkCollisions(bodies: Body[], rocket: Rocket): Collision | null {
   const halfW = (rocket.width / 2) * PIXEL
   const halfH = (rocket.height / 2) * PIXEL
 
@@ -35,7 +37,13 @@ export function checkCollisions(bodies: Body[], rocket: Rocket): Body | null {
     const distX = localX - closestX
     const distY = localY - closestY
     if (distX * distX + distY * distY <= body.radius * body.radius * PIXEL * PIXEL) {
-      return body
+      // Normal in local space, rotated back to world space
+      const dist = Math.sqrt(distX * distX + distY * distY)
+      const nx = distX / dist
+      const ny = distY / dist
+      const worldNx = nx * Math.cos(rocket.rotation) - ny * Math.sin(rocket.rotation)
+      const worldNy = nx * Math.sin(rocket.rotation) + ny * Math.cos(rocket.rotation)
+      return { body, normal: { x: worldNx, y: worldNy } }
     }
   }
   return null
