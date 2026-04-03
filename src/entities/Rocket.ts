@@ -199,20 +199,18 @@ export class Rocket extends Entity {
     applyGravity(this.bodies, this)
     const collision = checkCollisions(this.bodies, this)
     if (collision) {
-      const { normal: n, penetration } = collision
+      const { normal: n, penetration, contact: r } = collision
 
       // Depenetrate: push rocket out along the normal
       this.position.x -= n.x * penetration
       this.position.y -= n.y * penetration
 
-      const dot = this.velocity.x * n.x + this.velocity.y * n.y
+      // Velocity at contact point (includes angular contribution)
+      const vContactX = this.velocity.x - this.angularVelocity * r.y
+      const vContactY = this.velocity.y + this.angularVelocity * r.x
+      const vRel = vContactX * n.x + vContactY * n.y
 
-      if (!this.isLanded && Math.abs(dot) < this.landingSpeed) {
-        // Land: zero out velocity and cancel gravity into the surface each frame
-        this.isLanded = true
-        this.velocity.x = 0
-        this.velocity.y = 0
-      } else if (this.isLanded) {
+      if (this.isLanded) {
         // Cancel the acceleration component pushing into the surface (normal force)
         const aDot = this.acceleration.x * n.x + this.acceleration.y * n.y
         if (aDot < 0) {
@@ -221,10 +219,22 @@ export class Rocket extends Entity {
         }
         this.velocity.x = 0
         this.velocity.y = 0
+        this.angularVelocity = 0
+      } else if (Math.abs(vRel) < this.landingSpeed) {
+        this.isLanded = true
+        this.velocity.x = 0
+        this.velocity.y = 0
+        this.angularVelocity = 0
       } else {
-        // Bounce
-        this.velocity.x -= (1 + this.restitution) * dot * n.x
-        this.velocity.y -= (1 + this.restitution) * dot * n.y
+        // Rigid body impulse with rotation
+        const wPx = (this.width * PIXEL)
+        const wPy = (this.height * PIXEL)
+        const I = this.m * (wPx * wPx + wPy * wPy) / 12
+        const rCrossN = r.x * n.y - r.y * n.x
+        const j = -(1 + this.restitution) * vRel / (1 / this.m + rCrossN * rCrossN / I)
+        this.velocity.x += (j / this.m) * n.x
+        this.velocity.y += (j / this.m) * n.y
+        this.angularVelocity += (rCrossN * j) / I
       }
     } else {
       this.isLanded = false

@@ -15,7 +15,12 @@ export function applyGravity(bodies: Body[], rocket: Rocket) {
   }
 }
 
-export type Collision = { body: Body; normal: { x: number; y: number }; penetration: number }
+export type Collision = {
+  body: Body
+  normal: { x: number; y: number }
+  penetration: number
+  contact: { x: number; y: number } // relative to rocket center, in world space
+}
 
 export function checkCollisions(bodies: Body[], rocket: Rocket): Collision | null {
   const halfW = (rocket.width / 2) * PIXEL
@@ -43,9 +48,18 @@ export function checkCollisions(bodies: Body[], rocket: Rocket): Collision | nul
       const dist = Math.sqrt(distSq)
       const nx = distX / dist
       const ny = distY / dist
-      const worldNx = nx * Math.cos(rocket.rotation) - ny * Math.sin(rocket.rotation)
-      const worldNy = nx * Math.sin(rocket.rotation) + ny * Math.cos(rocket.rotation)
-      return { body, normal: { x: worldNx, y: worldNy }, penetration: radiusPx - dist }
+      const cosR = Math.cos(rocket.rotation)
+      const sinR = Math.sin(rocket.rotation)
+      const worldNx = nx * cosR - ny * sinR
+      const worldNy = nx * sinR + ny * cosR
+      const contactX = closestX * cosR - closestY * sinR
+      const contactY = closestX * sinR + closestY * cosR
+      return {
+        body,
+        normal: { x: worldNx, y: worldNy },
+        penetration: radiusPx - dist,
+        contact: { x: contactX, y: contactY },
+      }
     }
   }
   return null
