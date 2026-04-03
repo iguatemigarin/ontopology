@@ -9,7 +9,6 @@ const fpsCounter = new FPSCounter()
 rootEntity.add(fpsCounter)
 
 const rocket = new Rocket({ x: window.innerWidth / 2, y: window.innerHeight / 2 - 200 })
-rootEntity.add(rocket)
 
 const body = new Body(
   {
@@ -19,6 +18,7 @@ const body = new Body(
   1,
 )
 rootEntity.add(body)
+rootEntity.add(rocket)
 
 rocket.bodies.push(body)
 initLoop(rootEntity)

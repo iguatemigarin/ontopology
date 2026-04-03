@@ -6,16 +6,17 @@ import { ThrustSound } from '../sounds/ThrustSound'
 import { BreakParticle } from './BreakParticle'
 import { JetParticle } from './JetParticle'
 import { Body } from './Body'
+import { applyGravity, checkCollisions } from '../engine/Physics'
 
 export class Rocket extends Entity {
   p: Vect
   v: Vect = { x: 0, y: 0 }
   a: Vect = { x: 0, y: 0 }
   r: number = 0
-  m = 1
+  m = 0.001
   bodies: Body[] = []
 
-  enginePower: number = 0.0001
+  enginePower: number = 0.0005
   breakPower: number = 0.001
   rotationPower: number = 0.001
 
@@ -169,15 +170,10 @@ export class Rocket extends Entity {
   }
 
   handleBodies() {
-    for (const body of this.bodies) {
-      const dx = body.p.x - this.p.x
-      const dy = body.p.y - this.p.y
-      const r = Math.sqrt(dx * dx + dy * dy)
-      const f = (G * this.m * body.m) / (r * r)
-      const fx = f * (dx / r)
-      const fy = f * (dy / r)
-      this.a.x += fx / this.m
-      this.a.y += fy / this.m
+    applyGravity(this.bodies, this)
+    if (checkCollisions(this.bodies, this)) {
+      this.v.x *= -0.1
+      this.v.y *= -0.1
     }
   }
 }
