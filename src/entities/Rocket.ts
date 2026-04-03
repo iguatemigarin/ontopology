@@ -9,12 +9,12 @@ import { Body } from './Body'
 import { applyGravity, checkCollisions } from '../engine/Physics'
 
 export class Rocket extends Entity {
-  p: Vect
-  v: Vect = { x: 0, y: 0 }
-  a: Vect = { x: 0, y: 0 }
-  r: number = 0
-  rv: number = 0
-  ra: number = 0
+  position: Vect
+  velocity: Vect = { x: 0, y: 0 }
+  acceleration: Vect = { x: 0, y: 0 }
+  rotation: number = 0
+  angularVelocity: number = 0
+  angularAcceleration: number = 0
 
   m = 0.001
   bodies: Body[] = []
@@ -35,7 +35,7 @@ export class Rocket extends Entity {
 
   constructor(pos: Vect) {
     super()
-    this.p = pos
+    this.position = pos
     this.thrustSound = new ThrustSound('DARK')
     this.breakSound = new ThrustSound('BRIGHT')
   }
@@ -79,68 +79,69 @@ export class Rocket extends Entity {
 
   renderInPlace(ctx: CanvasRenderingContext2D, cb: (ctx: CanvasRenderingContext2D) => void) {
     ctx.save()
-    ctx.translate(this.p.x, this.p.y)
-    ctx.rotate(this.r)
+    ctx.translate(this.position.x, this.position.y)
+    ctx.rotate(this.rotation)
     cb(ctx)
     ctx.restore()
   }
 
   update(delta: number) {
-    this.a = { x: 0, y: 0 }
-    this.ra = 0
+    this.acceleration = { x: 0, y: 0 }
+    this.angularAcceleration = 0
 
     this.handleRotation(delta)
     this.handleThrust()
     this.handleBreak(delta)
     this.handleBodies()
 
-    if (Math.abs(this.r) > Math.PI * 2) this.r = 0
+    if (Math.abs(this.rotation) > Math.PI * 2) this.rotation = 0
 
-    this.v.x += this.a.x * delta
-    this.v.y += this.a.y * delta
+    this.velocity.x += this.acceleration.x * delta
+    this.velocity.y += this.acceleration.y * delta
 
-    this.p.x += this.v.x
-    this.p.y += this.v.y
+    this.position.x += this.velocity.x
+    this.position.y += this.velocity.y
   }
 
   ejectEngineParticle() {
     const particle = new JetParticle(
       {
-        x: this.p.x - (this.width + PIXEL) * PIXEL * Math.sin(this.r),
-        y: this.p.y + ((this.height + PIXEL) / 2) * PIXEL * Math.cos(this.r),
+        x: this.position.x - (this.width + PIXEL) * PIXEL * Math.sin(this.rotation),
+        y: this.position.y + ((this.height + PIXEL) / 2) * PIXEL * Math.cos(this.rotation),
       },
       {
-        x: -100 * this.enginePower * Math.sin(this.r),
-        y: 100 * this.enginePower * Math.cos(this.r),
+        x: -100 * this.enginePower * Math.sin(this.rotation),
+        y: 100 * this.enginePower * Math.cos(this.rotation),
       },
-      this.r,
+      this.rotation,
     )
 
     this.add(particle)
   }
 
   ejectBreakParticle() {
-    const particle = new BreakParticle(this.p, this.v)
+    const particle = new BreakParticle(this.position, this.velocity)
     this.add(particle)
   }
 
   handleRotation(delta: number) {
     if (isDown('a') || isDown('ArrowLeft')) {
-      this.ra += -this.rotationPower
+      this.angularAcceleration += -this.rotationPower
     }
 
     if (isDown('d') || isDown('ArrowRight')) {
-      this.ra += this.rotationPower
+      this.angularAcceleration += this.rotationPower
     }
 
-    this.rv += this.ra * delta
-    if (Math.abs(this.rv) > 0.0001) {
-      this.rv *= this.rotationDrag
+    this.angularVelocity += this.angularAcceleration * delta
+
+    if (Math.abs(this.angularVelocity) > 0.0001) {
+      this.angularVelocity *= this.rotationDrag
     } else {
-      this.rv = 0
+      this.angularVelocity = 0
     }
 
-    this.r += this.rv
+    this.rotation += this.angularVelocity
   }
 
   handleThrust() {
@@ -149,8 +150,8 @@ export class Rocket extends Entity {
         this.thrustSound.play()
         this.isThrustPlaying = true
       }
-      this.a.x += Math.sin(this.r) * this.enginePower
-      this.a.y += -Math.cos(this.r) * this.enginePower
+      this.acceleration.x += Math.sin(this.rotation) * this.enginePower
+      this.acceleration.y += -Math.cos(this.rotation) * this.enginePower
 
       this.ejectEngineParticle()
     } else {
@@ -163,13 +164,13 @@ export class Rocket extends Entity {
 
   handleBreak(delta: number) {
     if (isDown(' ')) {
-      this.v.x *= Math.pow(1 - this.breakPower, delta)
-      this.v.y *= Math.pow(1 - this.breakPower, delta)
+      this.velocity.x *= Math.pow(1 - this.breakPower, delta)
+      this.velocity.y *= Math.pow(1 - this.breakPower, delta)
 
-      if (Math.abs(this.v.x) < 0.05) this.v.x = 0
-      if (Math.abs(this.v.y) < 0.05) this.v.y = 0
+      if (Math.abs(this.velocity.x) < 0.05) this.velocity.x = 0
+      if (Math.abs(this.velocity.y) < 0.05) this.velocity.y = 0
 
-      if (this.v.x !== 0 || this.v.y !== 0) {
+      if (this.velocity.x !== 0 || this.velocity.y !== 0) {
         if (!this.isBreakPlaying) {
           this.isBreakPlaying = true
           this.breakSound.play()
@@ -192,8 +193,8 @@ export class Rocket extends Entity {
   handleBodies() {
     applyGravity(this.bodies, this)
     if (checkCollisions(this.bodies, this)) {
-      this.v.x *= -0.1
-      this.v.y *= -0.1
+      this.velocity.x *= -0.1
+      this.velocity.y *= -0.1
     }
   }
 }

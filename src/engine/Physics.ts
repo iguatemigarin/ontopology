@@ -4,14 +4,14 @@ import type { Body } from '../entities/Body'
 
 export function applyGravity(bodies: Body[], rocket: Rocket) {
   for (const body of bodies) {
-    const dx = body.p.x - rocket.p.x
-    const dy = body.p.y - rocket.p.y
+    const dx = body.p.x - rocket.position.x
+    const dy = body.p.y - rocket.position.y
     const r = Math.sqrt(dx * dx + dy * dy)
     const f = (G * rocket.m * body.m) / (r * r)
     const fx = f * (dx / r)
     const fy = f * (dy / r)
-    rocket.a.x += fx / rocket.m
-    rocket.a.y += fy / rocket.m
+    rocket.acceleration.x += fx / rocket.m
+    rocket.acceleration.y += fy / rocket.m
   }
 }
 
@@ -21,10 +21,10 @@ export function checkCollisions(bodies: Body[], rocket: Rocket): Body | null {
 
   for (const body of bodies) {
     // Transform body center into rocket's local (unrotated) space
-    const dx = body.p.x - rocket.p.x
-    const dy = body.p.y - rocket.p.y
-    const cos = Math.cos(-rocket.r)
-    const sin = Math.sin(-rocket.r)
+    const dx = body.p.x - rocket.position.x
+    const dy = body.p.y - rocket.position.y
+    const cos = Math.cos(-rocket.rotation)
+    const sin = Math.sin(-rocket.rotation)
     const localX = dx * cos - dy * sin
     const localY = dx * sin + dy * cos
 
