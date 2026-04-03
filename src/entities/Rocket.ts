@@ -2,34 +2,21 @@ import { COLOR, PIXEL } from '../constants'
 import { Entity } from '../engine/Entity'
 import { isDown } from '../engine/input'
 import type { Vect } from '../engine/Vect'
+import { RigidBody } from '../engine/RigidBody'
+import { resolveCollision } from '../engine/Physics'
 import { ThrustSound } from '../sounds/ThrustSound'
 import { BreakParticle } from './BreakParticle'
 import { JetParticle } from './JetParticle'
 import { Body } from './Body'
-import { applyGravity, checkCollisions } from '../engine/Physics'
 
 export class Rocket extends Entity {
-  position: Vect
-  velocity: Vect = { x: 0, y: 0 }
-  acceleration: Vect = { x: 0, y: 0 }
-  rotation: number = 0
-  angularVelocity: number = 0
-  angularAcceleration: number = 0
+  body: RigidBody
 
-  m = 0.001
   bodies: Body[] = []
 
   enginePower: number = 0.0005
   breakPower: number = 0.001
   rotationPower: number = 0.00005
-  rotationDrag: number = 0.99
-  restitution: number = 0.8
-  landingSpeed: number = 0.2
-
-  isLanded: boolean = false
-
-  width: number = 4
-  height: number = 10
 
   isThrustPlaying = false
   thrustSound: ThrustSound
@@ -39,7 +26,13 @@ export class Rocket extends Entity {
 
   constructor(pos: Vect) {
     super()
-    this.position = pos
+    this.body = new RigidBody(pos)
+    this.body.m = 0.001
+    this.body.width = 4
+    this.body.height = 10
+    this.body.restitution = 0.8
+    this.body.landingSpeed = 0.2
+    this.body.angularDrag = 0.99
     this.thrustSound = new ThrustSound('DARK')
     this.breakSound = new ThrustSound('BRIGHT')
   }
@@ -54,10 +47,10 @@ export class Rocket extends Entity {
     this.renderInPlace(ctx, (ctx) => {
       ctx.fillStyle = COLOR.GREY3
       ctx.fillRect(
-        (-this.width / 2) * PIXEL,
-        (-this.height / 2) * PIXEL,
-        this.width * PIXEL,
-        this.height * PIXEL,
+        (-this.body.width / 2) * PIXEL,
+        (-this.body.height / 2) * PIXEL,
+        this.body.width * PIXEL,
+        this.body.height * PIXEL,
       )
     })
   }
@@ -66,10 +59,10 @@ export class Rocket extends Entity {
     this.renderInPlace(ctx, (ctx) => {
       ctx.fillStyle = COLOR.GREEN
       ctx.fillRect(
-        (-this.width / 4) * PIXEL,
-        (-this.height / 2) * PIXEL,
-        (this.width / 2) * PIXEL,
-        (this.height / 4) * PIXEL,
+        (-this.body.width / 4) * PIXEL,
+        (-this.body.height / 2) * PIXEL,
+        (this.body.width / 2) * PIXEL,
+        (this.body.height / 4) * PIXEL,
       )
     })
   }
@@ -77,87 +70,66 @@ export class Rocket extends Entity {
   renderBreakSystem(ctx: CanvasRenderingContext2D) {
     this.renderInPlace(ctx, (ctx) => {
       ctx.fillStyle = COLOR.PURPLE
-      ctx.fillRect((-this.width / 8) * PIXEL, -PIXEL, (this.width / 4) * PIXEL, PIXEL)
+      ctx.fillRect((-this.body.width / 8) * PIXEL, -PIXEL, (this.body.width / 4) * PIXEL, PIXEL)
     })
   }
 
   renderInPlace(ctx: CanvasRenderingContext2D, cb: (ctx: CanvasRenderingContext2D) => void) {
     ctx.save()
-    ctx.translate(this.position.x, this.position.y)
-    ctx.rotate(this.rotation)
+    ctx.translate(this.body.position.x, this.body.position.y)
+    ctx.rotate(this.body.rotation)
     cb(ctx)
     ctx.restore()
   }
 
   update(delta: number) {
-    this.acceleration = { x: 0, y: 0 }
-    this.angularAcceleration = 0
+    this.body.acceleration = { x: 0, y: 0 }
+    this.body.angularAcceleration = 0
 
     this.handleRotation(delta)
     this.handleThrust()
     this.handleBreak(delta)
-    this.handleBodies()
 
-    if (Math.abs(this.rotation) > Math.PI * 2) this.rotation = 0
+    resolveCollision(this.body, this.bodies)
 
-    this.velocity.x += this.acceleration.x * delta
-    this.velocity.y += this.acceleration.y * delta
-
-    this.position.x += this.velocity.x
-    this.position.y += this.velocity.y
+    this.body.integrate(delta)
   }
 
   ejectEngineParticle() {
+    const { position: p, rotation: r, width, height } = this.body
     const particle = new JetParticle(
       {
-        x: this.position.x - (this.width + PIXEL) * PIXEL * Math.sin(this.rotation),
-        y: this.position.y + ((this.height + PIXEL) / 2) * PIXEL * Math.cos(this.rotation),
+        x: p.x - (width + PIXEL) * PIXEL * Math.sin(r),
+        y: p.y + ((height + PIXEL) / 2) * PIXEL * Math.cos(r),
       },
       {
-        x: -100 * this.enginePower * Math.sin(this.rotation),
-        y: 100 * this.enginePower * Math.cos(this.rotation),
+        x: -100 * this.enginePower * Math.sin(r),
+        y: 100 * this.enginePower * Math.cos(r),
       },
-      this.rotation,
+      r,
     )
-
     this.add(particle)
   }
 
   ejectBreakParticle() {
-    const particle = new BreakParticle(this.position, this.velocity)
+    const particle = new BreakParticle(this.body.position, this.body.velocity)
     this.add(particle)
   }
 
   handleRotation(delta: number) {
-    if (isDown('a') || isDown('ArrowLeft')) {
-      this.angularAcceleration += -this.rotationPower
-    }
-
-    if (isDown('d') || isDown('ArrowRight')) {
-      this.angularAcceleration += this.rotationPower
-    }
-
-    this.angularVelocity += this.angularAcceleration * delta
-
-    if (Math.abs(this.angularVelocity) > 0.0001) {
-      this.angularVelocity *= this.rotationDrag
-    } else {
-      this.angularVelocity = 0
-    }
-
-    this.rotation += this.angularVelocity
+    if (isDown('a') || isDown('ArrowLeft')) this.body.angularAcceleration -= this.rotationPower
+    if (isDown('d') || isDown('ArrowRight')) this.body.angularAcceleration += this.rotationPower
   }
 
   handleThrust() {
     if (isDown('w') || isDown('ArrowUp')) {
-      this.isLanded = false
+      this.body.isLanded = false
       if (!this.isThrustPlaying) {
         this.thrustSound.play()
         this.isThrustPlaying = true
       }
-      this.acceleration.x += Math.sin(this.rotation) * this.enginePower
-      this.acceleration.y += -Math.cos(this.rotation) * this.enginePower
-
+      this.body.acceleration.x += Math.sin(this.body.rotation) * this.enginePower
+      this.body.acceleration.y += -Math.cos(this.body.rotation) * this.enginePower
       this.ejectEngineParticle()
     } else {
       if (this.isThrustPlaying) {
@@ -169,13 +141,13 @@ export class Rocket extends Entity {
 
   handleBreak(delta: number) {
     if (isDown(' ')) {
-      this.velocity.x *= Math.pow(1 - this.breakPower, delta)
-      this.velocity.y *= Math.pow(1 - this.breakPower, delta)
+      this.body.velocity.x *= Math.pow(1 - this.breakPower, delta)
+      this.body.velocity.y *= Math.pow(1 - this.breakPower, delta)
 
-      if (Math.abs(this.velocity.x) < 0.05) this.velocity.x = 0
-      if (Math.abs(this.velocity.y) < 0.05) this.velocity.y = 0
+      if (Math.abs(this.body.velocity.x) < 0.05) this.body.velocity.x = 0
+      if (Math.abs(this.body.velocity.y) < 0.05) this.body.velocity.y = 0
 
-      if (this.velocity.x !== 0 || this.velocity.y !== 0) {
+      if (this.body.velocity.x !== 0 || this.body.velocity.y !== 0) {
         if (!this.isBreakPlaying) {
           this.isBreakPlaying = true
           this.breakSound.play()
@@ -192,52 +164,6 @@ export class Rocket extends Entity {
         this.isBreakPlaying = false
         this.breakSound.stop()
       }
-    }
-  }
-
-  handleBodies() {
-    applyGravity(this.bodies, this)
-    const collision = checkCollisions(this.bodies, this)
-    if (collision) {
-      const { normal: n, penetration, contact: r } = collision
-
-      // Depenetrate: push rocket out along the normal
-      this.position.x -= n.x * penetration
-      this.position.y -= n.y * penetration
-
-      // Velocity at contact point (includes angular contribution)
-      const vContactX = this.velocity.x - this.angularVelocity * r.y
-      const vContactY = this.velocity.y + this.angularVelocity * r.x
-      const vRel = vContactX * n.x + vContactY * n.y
-
-      if (this.isLanded) {
-        // Cancel the acceleration component pushing into the surface (normal force)
-        const aDot = this.acceleration.x * n.x + this.acceleration.y * n.y
-        if (aDot < 0) {
-          this.acceleration.x -= aDot * n.x
-          this.acceleration.y -= aDot * n.y
-        }
-        this.velocity.x = 0
-        this.velocity.y = 0
-        this.angularVelocity = 0
-      } else if (Math.abs(vRel) < this.landingSpeed) {
-        this.isLanded = true
-        this.velocity.x = 0
-        this.velocity.y = 0
-        this.angularVelocity = 0
-      } else {
-        // Rigid body impulse with rotation
-        const wPx = (this.width * PIXEL)
-        const wPy = (this.height * PIXEL)
-        const I = this.m * (wPx * wPx + wPy * wPy) / 12
-        const rCrossN = r.x * n.y - r.y * n.x
-        const j = -(1 + this.restitution) * vRel / (1 / this.m + rCrossN * rCrossN / I)
-        this.velocity.x += (j / this.m) * n.x
-        this.velocity.y += (j / this.m) * n.y
-        this.angularVelocity += (rCrossN * j) / I
-      }
-    } else {
-      this.isLanded = false
     }
   }
 }
